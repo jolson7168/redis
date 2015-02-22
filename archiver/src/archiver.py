@@ -2,7 +2,10 @@ import time
 import subprocess
 import select
 from pprint import pprint
-
+import sys
+import getopt
+import logging
+import S3
 
 config = {}
 
@@ -15,8 +18,16 @@ def initLog():
 	logger.setLevel(logging.INFO)
 	return logger
 
+def dumpToCS(addArray):
+	theLogger = logging.getLogger(config["logname"])
+	key=addArray[1]
+	score=addArray[3]
+	payload=addArray[5]
+	S3.uploadStringToS3(config["AWS_ACCESS_KEY"],config["AWS_ACCESS_SECRET_KEY"],score+","+payload,config["bucket"],key+'/'+score+'.txt',content_type="application/text",logger=theLogger)
+
 def doArchive(fileName):
-	f = subprocess.Popen(['tail','-F',fileName], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+
+	f = subprocess.Popen(['tail','-f', '-n', '0',fileName], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 	p = select.poll()
 	p.register(f.stdout)
 
@@ -27,10 +38,8 @@ def doArchive(fileName):
 		if f.stdout.readline()[:4].upper() == 'ZADD':
 		        while p.poll(1):
 		                zAdd.append(f.stdout.readline())
-		        pprint(zAdd)
+			dumpToCS(zAdd)
 		        zAdd=[]
-
-
 
 def main(argv):
  	try:
@@ -51,7 +60,7 @@ def main(argv):
 				sys.exit(2)
 	execfile(configFile, config)
 	logger=initLog()
-	logger.info('Starting Archive: '+currentDayStr()+'  ========================================')
+	logger.info('Starting Archive: ========================================')
 	doArchive(config["transactionLog"])
 
 if __name__ == "__main__":
