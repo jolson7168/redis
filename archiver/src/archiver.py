@@ -8,7 +8,6 @@ import logging
 import S3
 
 config = {}
-observations=[]
 class observation:
   def __init__(self):
     self.timestamp = 0
@@ -45,6 +44,7 @@ def doArchive(fileName):
 	    if p.poll(1):
 		if f.stdout.readline()[:4].upper() == 'ZADD':
 			logger.info("Got a ZADD")
+			observations=[]
 		        while p.poll(1):				
 				f.stdout.readline()  #junk
 				key = f.stdout.readline() #key
@@ -66,7 +66,7 @@ def doArchive(fileName):
 						logger.info("Timestamp: "+str(newObservation.timestamp))
 						f.stdout.readline()  #junk
 						newObservation.payload = f.stdout.readline() #data
-						newObservations.append(newObservation)
+						observations.append(newObservation)
 			#dumpToCS(key,observations)
 		        observations=[]
 		else:
