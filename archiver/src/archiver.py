@@ -49,7 +49,6 @@ def doArchive(fileName):
 				f.stdout.readline()  #junk
 				key = f.stdout.readline() #key
 				logger.info("Key: "+key)
-				f.stdout.readline()  #junk
 				done2=False
 				while not done2:
 					line = f.stdout.readline() 
@@ -59,6 +58,8 @@ def doArchive(fileName):
 					elif line[:1]=="*":
 						done2 = True 
 						logger.info("Exiting star")
+					elif line[:1]=="$":
+						logger.info("Got Junk")
 					else:
 						newObservation=observation()
 						newObservation.timestamp = f.stdout.readline() #timestamp
