@@ -67,6 +67,8 @@ def doArchive(fileName):
 						f.stdout.readline()  #junk
 						newObservation.payload = f.stdout.readline() #data
 						observations.append(newObservation)
+					if not p.poll(1):
+						done2=True
 				logger.info("Out done2")
 			#dumpToCS(key,observations)
 		        observations=[]
