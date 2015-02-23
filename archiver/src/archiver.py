@@ -62,7 +62,7 @@ def doArchive(fileName):
 						logger.info("Got Junk")
 					else:
 						newObservation=observation()
-						newObservation.timestamp = f.stdout.readline() #timestamp
+						newObservation.timestamp = line #timestamp
 						logger.info("Timestamp: "+str(newObservation.timestamp))
 						f.stdout.readline()  #junk
 						newObservation.payload = f.stdout.readline() #data
