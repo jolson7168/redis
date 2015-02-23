@@ -48,11 +48,14 @@ def doArchive(fileName):
 		        while p.poll(1):				
 				f.stdout.readline()  #junk
 				key = f.stdout.readline() #key
+				logger.info("Key: "+key)
 				f.stdout.readline()  #junk
 				done2=False
 				while not done2:
 					if f.stdout.readline()[:1]=="*":
 						done2 = True
+					elif not f.stdout.readline():
+						done2 = True 
 					else:
 						newObservation=observation()
 						newObservation.timestamp = f.stdout.readline() #timestamp
