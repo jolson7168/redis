@@ -52,12 +52,13 @@ def doArchive(fileName):
 				f.stdout.readline()  #junk
 				done2=False
 				while not done2:
-					if f.stdout.readline()[:1]=="*":
+					line = f.stdout.readline() 
+					if not line:
 						done2 = True
-						logger.info("Exiting star")
-					elif not f.stdout.readline():
+						logger.info("Exiting none")
+					elif line[:1]=="*":
 						done2 = True 
-						logger.info("Exiting readline")
+						logger.info("Exiting star")
 					else:
 						newObservation=observation()
 						newObservation.timestamp = f.stdout.readline() #timestamp
