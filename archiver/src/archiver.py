@@ -54,15 +54,18 @@ def doArchive(fileName):
 				while not done2:
 					if f.stdout.readline()[:1]=="*":
 						done2 = True
+						logger.info("Exiting star")
 					elif not f.stdout.readline():
 						done2 = True 
+						logger.info("Exiting readline")
 					else:
 						newObservation=observation()
 						newObservation.timestamp = f.stdout.readline() #timestamp
+						logger.info("Timestamp: "+str(newObservation.timestamp))
 						f.stdout.readline()  #junk
 						newObservation.payload = f.stdout.readline() #data
 						observations.append(newObservation)
-			dumpToCS(key,observations)
+			#dumpToCS(key,observations)
 		        observations=[]
 		else:
 			f.stdout.readline()  #junk
