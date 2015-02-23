@@ -8,6 +8,12 @@ import logging
 import S3
 
 config = {}
+observations=[]
+class observation:
+  def __init__(self):
+    self.timestamp = 0
+    self.payload = ""
+
 
 def initLog():
 	logger = logging.getLogger(config["logname"])
@@ -18,12 +24,14 @@ def initLog():
 	logger.setLevel(logging.INFO)
 	return logger
 
-def dumpToCS(addArray):
-	theLogger = logging.getLogger(config["logname"])
-	key=addArray[1]
-	score=addArray[3]
-	payload=addArray[5]
-	S3.uploadStringToS3(config["AWS_ACCESS_KEY"],config["AWS_ACCESS_SECRET_KEY"],score+","+payload,config["bucket"],key+'/'+score+'.txt',content_type="application/text",logger=theLogger)
+def dumpToCS(key,observations):
+#	theLogger = logging.getLogger(config["logname"])
+#	key=addArray[1]
+#	score=addArray[3]
+#	payload=addArray[5]
+#	S3.uploadStringToS3(config["AWS_ACCESS_KEY"],config["AWS_ACCESS_SECRET_KEY"],score+","+payload,config["bucket"],key+'/'+score+'.txt',content_type="application/text",logger=theLogger)
+	print("key: "+key)
+	pprint(observations)
 
 def doArchive(fileName):
 
@@ -35,11 +43,26 @@ def doArchive(fileName):
 	done = False
 	while not done:
 	    if p.poll(1):
-		if f.stdout.readline()[:4].upper() == 'ZADD':
+		if f.stdout.readline()[:4].upper() == 'ZADD':	
 		        while p.poll(1):
-		                zAdd.append(f.stdout.readline())
-			dumpToCS(zAdd)
-		        zAdd=[]
+				f.stdout.readline()  #junk
+				key = f.stdout.readline() #key
+				f.stdout.readline()  #junk
+				done2=False
+				while not done2:
+					if f.stdout.readline()[:1]="*":
+						done2 = True
+					else:
+						newObservation=observation()
+						newObservation.timestamp = f.stdout.readline() #timestamp
+						f.stdout.readline()  #junk
+						newObservation.payload = f.stdout.readline() #data
+						observations.append(newObservation)
+			dumpToCS(key,observations)
+		        observations=[]
+		else:
+			f.stdout.readline()  #junk
+
 
 def main(argv):
  	try:
