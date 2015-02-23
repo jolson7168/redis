@@ -34,7 +34,7 @@ def dumpToCS(key,observations):
 	pprint(observations)
 
 def doArchive(fileName):
-
+	logger = logging.getLogger(config["logname"])
 	f = subprocess.Popen(['tail','-f', '-n', '0',fileName], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 	p = select.poll()
 	p.register(f.stdout)
@@ -43,14 +43,15 @@ def doArchive(fileName):
 	done = False
 	while not done:
 	    if p.poll(1):
-		if f.stdout.readline()[:4].upper() == 'ZADD':	
-		        while p.poll(1):
+		if f.stdout.readline()[:4].upper() == 'ZADD':
+			logger.info("Got a ZADD")
+		        while p.poll(1):				
 				f.stdout.readline()  #junk
 				key = f.stdout.readline() #key
 				f.stdout.readline()  #junk
 				done2=False
 				while not done2:
-					if f.stdout.readline()[:1]="*":
+					if f.stdout.readline()[:1]=="*":
 						done2 = True
 					else:
 						newObservation=observation()
