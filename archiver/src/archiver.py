@@ -66,7 +66,7 @@ def doArchive(fileName):
 						logger.info("Timestamp: "+str(newObservation.timestamp))
 						f.stdout.readline()  #junk
 						newObservation.payload = f.stdout.readline() #data
-						observations.append(newObservation)
+						newObservations.append(newObservation)
 			#dumpToCS(key,observations)
 		        observations=[]
 		else:
