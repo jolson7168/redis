@@ -5,7 +5,6 @@ from pprint import pprint
 import sys
 import getopt
 import logging
-import S3
 
 config = {}
 class observation:
@@ -23,16 +22,7 @@ def initLog():
 	logger.setLevel(logging.INFO)
 	return logger
 
-def dumpToCS(key,observations):
-#	theLogger = logging.getLogger(config["logname"])
-#	key=addArray[1]
-#	score=addArray[3]
-#	payload=addArray[5]
-#	S3.uploadStringToS3(config["AWS_ACCESS_KEY"],config["AWS_ACCESS_SECRET_KEY"],score+","+payload,config["bucket"],key+'/'+score+'.txt',content_type="application/text",logger=theLogger)
-	print("key: "+key)
-	pprint(observations)
-
-def doArchive(fileName):
+def tailLog(fileName):
 	logger = logging.getLogger(config["logname"])
 	f = subprocess.Popen(['tail','-f', '-n', '0',fileName], stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 	p = select.poll()
@@ -75,16 +65,46 @@ def doArchive(fileName):
 		else:
 			f.stdout.readline()  #junk
 
+def archiveOnce(fileName):
+	logger = logging.getLogger(config["logname"])
+	counter = 0
+	with open(fileName,'r') as logFile:
+	    while True:
+		line=logFile.readline()
+		counter = counter+1
+		if not line: break
+		if any(x in line for x in config["validKeys"]):
+			line=logFile.readline() #junk
+			key = logFile.readline().rstrip()
+			line=logFile.readline() #junk
+    			logger.info(str(counter)+": ZADD ("+key+")")
+			if key[-3:]=="DAT":
+				done = False
+				with open(config["tempDrive"]+"/"+key.replace(":DAT",".DAT"), "a") as myfile:
+					while not done:
+						line = logFile.readline().rstrip()
+						counter = counter +1
+						if any(x in line for x in ['ZADD', 'zadd']):
+							done=True
+						else:
+							try:
+								score=int(line)
+								myfile.write(score+"\n")
+								line = logFile.readline().rstrip()
+								logger.info(str(counter)+" score: "+str(score))
+							except:
+								myfile.write(line+"\n")
+				myfile.close()
 
 def main(argv):
  	try:
-      		opts, args = getopt.getopt(argv,"hc:",["configfile="])
+      		opts, args = getopt.getopt(argv,"hc:m:",["configfile=","mode="])
 	except getopt.GetoptError:
-		print ('archiver.py -c <configfile>')
+		print ('archiver.py -c <configfile> -m <mode>')
       		sys.exit(2)
 	for opt, arg in opts:
       		if opt == '-h':
-         		print ('archiver.py -c <configfile>')
+         		print ('archiver.py -c <configfile> -m <mode>')
          		sys.exit()
 		elif opt in ("-c", "--configfile"):
 			configFile=arg
@@ -93,10 +113,19 @@ def main(argv):
 			except IOError:
    				print ('Configuration file: '+configFile+' not found')
 				sys.exit(2)
+		elif opt in ("-m","--mode"):
+			if arg == "Tail":
+				normalMode = True
+			else:
+				normalMode = False
+						
 	execfile(configFile, config)
 	logger=initLog()
 	logger.info('Starting Archive: ========================================')
-	doArchive(config["transactionLog"])
+	if normalMode:
+		tailLog(config["transactionLog"])
+	else:
+		archiveOnce(config["transactionLog"])
 
 if __name__ == "__main__":
 	main(sys.argv[1:])
