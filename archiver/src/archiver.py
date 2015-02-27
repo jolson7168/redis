@@ -32,8 +32,9 @@ def tailLog(fileName):
 	done = False
 	while not done:
 	    if p.poll(1):
-		if f.stdout.readline()[:4].upper() == 'ZADD':
-			logger.info("Got a ZADD")
+		thisCommand=f.stdout.readline()
+		if any(x in thisCommand[:4] for x in config["validCommands"]):
+			logger.info("Got a "+str(thisCommand[:4]))
 			observations=[]
 		        while p.poll(1):				
 				f.stdout.readline()  #junk
@@ -60,7 +61,6 @@ def tailLog(fileName):
 					if not p.poll(1):
 						done2=True
 				logger.info("Out done2")
-			#dumpToCS(key,observations)
 		        observations=[]
 		else:
 			f.stdout.readline()  #junk
@@ -73,18 +73,20 @@ def archiveOnce(fileName):
 		line=logFile.readline()
 		counter = counter+1
 		if not line: break
-		if any(x in line for x in config["validKeys"]):
+		if any(x in line for x in config["validCommands"]):
+			templine=line
 			line=logFile.readline() #junk
 			key = logFile.readline().rstrip()
+    			logger.info(str(counter)+": "+templine.replace("\n","")+" ("+key+")")
 			line=logFile.readline() #junk
-    			logger.info(str(counter)+": ZADD ("+key+")")
-			if key[-3:]=="DAT":
+			if any(x in key for x in config["relevantKeys"]):
 				done = False
-				with open(config["tempDrive"]+"/"+key.replace(":DAT",".DAT"), "a") as myfile:
+				# .replace(":DAT",".DAT")?
+				with open(config["tempDrive"]+"/"+key, "a") as myfile:
 					while not done:
 						line = logFile.readline().rstrip()
 						counter = counter +1
-						if any(x in line for x in ['ZADD', 'zadd']):
+						if any(x in line for x in config["validCommands"]):
 							done=True
 						else:
 							try:
